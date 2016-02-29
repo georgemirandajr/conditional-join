@@ -64,17 +64,17 @@
                      <span class="pl-v">format</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>%Y-%m-%d<span class="pl-pds">"</span></span>, 
                      <span class="pl-v">tz</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>UTC<span class="pl-pds">"</span></span>),
   <span class="pl-v">case</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>CN123<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN456<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN789<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN246<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN802<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN135<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN791<span class="pl-pds">"</span></span>))
-
-<span class="pl-smi">df1</span>
-
-<span class="pl-smi">df2</span></pre></div>
+</pre></div>
 
 <p>Both datasets contain the unique identifier variable <code>x</code>, but the second dataset does not have information on one of the identifiers in <code>df1</code>.  </p>
 
 <h3>
 <a id="we-can-start-with-a-simple-merge-based-on-x-number" class="anchor" href="#we-can-start-with-a-simple-merge-based-on-x-number" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>We can start with a simple merge based on x-number</h3>
 
-<div class="highlight highlight-source-r"><pre><span class="pl-smi">joined</span> <span class="pl-k">&lt;-</span> merge(<span class="pl-smi">df1</span>, <span class="pl-smi">df2</span>, <span class="pl-v">by</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>, <span class="pl-v">suffixes</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>.df1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>.df2<span class="pl-pds">"</span></span>), <span class="pl-v">all.x</span> <span class="pl-k">=</span> <span class="pl-c1">TRUE</span>)</pre></div>
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">joined</span> <span class="pl-k">&lt;-</span> merge(<span class="pl-smi">df1</span>, <span class="pl-smi">df2</span>, 
+          <span class="pl-v">by</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>, 
+          <span class="pl-v">suffixes</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>.df1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>.df2<span class="pl-pds">"</span></span>), 
+          <span class="pl-v">all.x</span> <span class="pl-k">=</span> <span class="pl-c1">TRUE</span>)</pre></div>
 
 <p>Let's see what's going on here. My primary data is the first argument while the reference dataset is the second argument, df2. The column names are the same, so I use the "by" argument and specify the variable containing x-numbers. I opt to add suffixes that make the resulting dataset easier to read. Finally, I tell R to return all the rows in the primary data even if there is no match. This is done with the argument "all.x".</p>
 
@@ -83,7 +83,8 @@
 <p>We can determine the correct case number by testing whether the date1 of df1 is between date1 and date2 of df2.</p>
 
 <div class="highlight highlight-source-r"><pre>
-<span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">match</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&gt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df2</span> <span class="pl-k">&amp;</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&lt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date2.df2</span>
+<span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">match</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&gt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df2</span> <span class="pl-k">&amp;</span> 
+                <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&lt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date2.df2</span>
 </pre></div>
 
 <p>Then we can subset for the records where the logical test was TRUE or NA. We keep NA's if we're interested in preserving the original dataset, which in this case we are.</p>
