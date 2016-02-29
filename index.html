@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Conditional-join by georgemirandajr</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Conditional-join</h1>
+        <p>A short tutorial on joining two datasets based on a unique identifier and some other conditional statement.</p>
+
+        <p class="view"><a href="https://github.com/georgemirandajr/conditional-join">View the Project on GitHub <small>georgemirandajr/conditional-join</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/georgemirandajr/conditional-join/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/georgemirandajr/conditional-join/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/georgemirandajr/conditional-join">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="conditionally-joining-datasets" class="anchor" href="#conditionally-joining-datasets" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conditionally Joining Datasets</h1>
+
+<h2>
+<a id="a-common-problem" class="anchor" href="#a-common-problem" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A Common Problem</h2>
+
+<p>One of the most common tasks in data analysis is to combine two or more datasets in order to know how a record in one dataset is related to the records in another dataset. An example of this is when a customer dataset may contain multiple account numbers per customer and a second dataset contains some additional information (e.g. transactions) about those customers. What we typically want to do is join these two datasets based on some identifier as well as a conditional statement that ensures we capture other information given some constraint. For example, we may have transaction history for someone, but we want to attribute these transactions to the correct account numbers based on the range of dates the accounts were active. </p>
+
+<h2>
+<a id="current-solutions" class="anchor" href="#current-solutions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Current Solutions</h2>
+
+<p>The <code>dplyr</code> package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. We will use <code>base</code> functions in this tutorial to accomplish conditional joining.</p>
+
+<h2>
+<a id="the-sample-data" class="anchor" href="#the-sample-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Sample Data</h2>
+
+<p>We will start with data that is typical in many situations. In one dataframe, there is an identifier and two columns that contain dates. We will use this as our primary dataset. The second dataframe contains similar variables, but it also contains a case number. I want to pull in the case number for each record in my primary dataset based on an exact match of the x-number and some conditional statement regarding the date range.</p>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">df1</span> <span class="pl-k">&lt;-</span> <span class="pl-k">data.frame</span>(
+  <span class="pl-v">x</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>x1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x4<span class="pl-pds">"</span></span>), 
+  <span class="pl-v">date1</span> <span class="pl-k">=</span> as.POSIXct(c(<span class="pl-s"><span class="pl-pds">"</span>2011-12-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-01-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2011-09-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-04-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2015-06-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-08-01<span class="pl-pds">"</span></span>), 
+                     <span class="pl-v">format</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>%Y-%m-%d<span class="pl-pds">"</span></span>, 
+                     <span class="pl-v">tz</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>UTC<span class="pl-pds">"</span></span>), 
+  <span class="pl-v">date2</span> <span class="pl-k">=</span> as.POSIXct(c(<span class="pl-s"><span class="pl-pds">"</span>2012-06-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-09-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-08-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-05-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2016-01-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2014-04-01<span class="pl-pds">"</span></span>), 
+                     <span class="pl-v">format</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>%Y-%m-%d<span class="pl-pds">"</span></span>, 
+                     <span class="pl-v">tz</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>UTC<span class="pl-pds">"</span></span>))
+
+<span class="pl-smi">df2</span> <span class="pl-k">&lt;-</span> <span class="pl-k">data.frame</span>(
+  <span class="pl-v">x</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>x1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x2<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x3<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>x3<span class="pl-pds">"</span></span>), 
+  <span class="pl-v">date1</span> <span class="pl-k">=</span> as.POSIXct(c(<span class="pl-s"><span class="pl-pds">"</span>2011-09-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-12-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2015-04-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-01-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2011-07-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-04-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2015-06-01<span class="pl-pds">"</span></span>), 
+                     <span class="pl-v">format</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>%Y-%m-%d<span class="pl-pds">"</span></span>, 
+                     <span class="pl-v">tz</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>UTC<span class="pl-pds">"</span></span>), 
+  <span class="pl-v">date2</span> <span class="pl-k">=</span> as.POSIXct(c(<span class="pl-s"><span class="pl-pds">"</span>2012-06-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-10-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2016-02-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-09-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2012-09-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2013-05-01<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2016-01-01<span class="pl-pds">"</span></span>), 
+                     <span class="pl-v">format</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>%Y-%m-%d<span class="pl-pds">"</span></span>, 
+                     <span class="pl-v">tz</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>UTC<span class="pl-pds">"</span></span>),
+  <span class="pl-v">case</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>CN123<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN456<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN789<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN246<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN802<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN135<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>CN791<span class="pl-pds">"</span></span>))
+
+<span class="pl-smi">df1</span>
+
+<span class="pl-smi">df2</span></pre></div>
+
+<p>Both datasets contain the unique identifier variable <code>x</code>, but the second dataset does not have information on one of the identifiers in <code>df1</code>.  </p>
+
+<h3>
+<a id="we-can-start-with-a-simple-merge-based-on-x-number" class="anchor" href="#we-can-start-with-a-simple-merge-based-on-x-number" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>We can start with a simple merge based on x-number</h3>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">joined</span> <span class="pl-k">&lt;-</span> merge(<span class="pl-smi">df1</span>, <span class="pl-smi">df2</span>, <span class="pl-v">by</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>, <span class="pl-v">suffixes</span> <span class="pl-k">=</span> c(<span class="pl-s"><span class="pl-pds">"</span>.df1<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>.df2<span class="pl-pds">"</span></span>), <span class="pl-v">all.x</span> <span class="pl-k">=</span> <span class="pl-c1">TRUE</span>)</pre></div>
+
+<p>Let's see what's going on here. My primary data is the first argument while the reference dataset is the second argument, df2. The column names are the same, so I use the "by" argument and specify the variable containing x-numbers. I opt to add suffixes that make the resulting dataset easier to read. Finally, I tell R to return all the rows in the primary data even if there is no match. This is done with the argument "all.x".</p>
+
+<p>This gets us multiple records per individual. We want to know, for each individual in our primary data, which matching record has the correct "case" value.</p>
+
+<p>We can determine the correct case number by testing whether the date1 of df1 is between date1 and date2 of df2.</p>
+
+<div class="highlight highlight-source-r"><pre>
+<span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">match</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&gt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df2</span> <span class="pl-k">&amp;</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date1.df1</span> <span class="pl-k">&lt;</span><span class="pl-k">=</span> <span class="pl-smi">joined</span><span class="pl-k">$</span><span class="pl-smi">date2.df2</span>
+</pre></div>
+
+<p>Then we can subset for the records where the logical test was TRUE or NA. We keep NA's if we're interested in preserving the original dataset, which in this case we are.</p>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">joined</span> <span class="pl-k">&lt;-</span> subset(<span class="pl-smi">joined</span>, <span class="pl-smi">match</span> <span class="pl-k">==</span> <span class="pl-c1">TRUE</span> <span class="pl-k">|</span> is.na(<span class="pl-smi">match</span>))
+
+<span class="pl-smi">joined</span></pre></div>
+
+<p>The resulting dataframe is the same number of rows as the original data and non-matches are indicated by <code>NA</code> values. The case number now appears in the row that pertains to an individual record that satisfied the date range condition.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/georgemirandajr">georgemirandajr</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
