@@ -4,7 +4,7 @@
 One of the most common tasks in data analysis is to combine two or more datasets in order to know how a record in one dataset is related to the records in another dataset. An example of this is when a customer dataset may contain multiple account numbers per customer and a second dataset contains some additional information (e.g. transactions) about those customers. What we typically want to do is join these two datasets based on some identifier as well as a conditional statement that ensures we capture other information given some constraint. For example, we may have transaction history for someone, but we want to attribute these transactions to the correct account numbers based on the range of dates the accounts were active. 
 
 ## Current Solutions
-The `dplyr` package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. We will use `base` functions in this tutorial to accomplish conditional joining.
+The `dplyr` package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. One must filter a joined dataset using some conditional statement in `dplyr`, which is still efficient and human-readable. However, since `dplyr` does not offer anything particularly unique, we will start by using native `base` R functions in this tutorial to accomplish conditional joining. At the end of the tutorial, a method using `dplyr` is shown.
 
 ## The Sample Data
 We will start with data that is typical in many situations. In one dataframe, there is an identifier and two columns that contain dates. We will use this as our primary dataset. The second dataframe contains similar variables, but it also contains a case number. I want to pull in the case number for each record in my primary dataset based on an exact match of the x-number and some conditional statement regarding the date range.
@@ -62,3 +62,21 @@ joined
 ```
 
 The resulting dataframe is the same number of rows as the original data and non-matches are indicated by `NA` values. The case number now appears in the row that pertains to an individual record that satisfied the date range condition.
+
+## The Dplyr Way
+In case you are interested in using dplyr to do this task, below is a brief outline of how to accomplish the same thing using dplyr.
+
+```{r}
+# Left Join
+join_df <- left_join(df1, df2, by = "x")
+
+# Slice on a conditional statement
+join_df <- join_df %>% 
+            slice(
+              which(
+                date1.x >= date1.y & date1.x <= date2.y | 
+                  is.na(case)
+                )
+              )
+```
+Because `slice` takes an integer of row numbers to filter, `which()` is an ideal helper function to contain the conditional statement. This method requires less code and is easy to understand without many comments. 

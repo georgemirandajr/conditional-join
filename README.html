@@ -69,7 +69,7 @@ img {
 </div>
 <div id="current-solutions" class="section level2">
 <h2>Current Solutions</h2>
-<p>The <code>dplyr</code> package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. We will use <code>base</code> functions in this tutorial to accomplish conditional joining.</p>
+<p>The <code>dplyr</code> package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. One must filter a joined dataset using some conditional statement in <code>dplyr</code>, which is still efficient and human-readable. However, since <code>dplyr</code> does not offer anything particularly unique, we will start by using native <code>base</code> R functions in this tutorial to accomplish conditional joining. At the end of the tutorial, a method using <code>dplyr</code> is shown.</p>
 </div>
 <div id="the-sample-data" class="section level2">
 <h2>The Sample Data</h2>
@@ -113,6 +113,22 @@ joined$match &lt;- joined$date1.df1 &gt;= joined$date1.df2 &amp;
 joined</code></pre>
 <p>The resulting dataframe is the same number of rows as the original data and non-matches are indicated by <code>NA</code> values. The case number now appears in the row that pertains to an individual record that satisfied the date range condition.</p>
 </div>
+</div>
+<div id="the-dplyr-way" class="section level2">
+<h2>The Dplyr Way</h2>
+<p>In case you are interested in using dplyr to do this task, below is a brief outline of how to accomplish the same thing using dplyr.</p>
+<pre class="{r}"><code># Left Join
+join_df &lt;- left_join(df1, df2, by = &quot;x&quot;)
+
+# Slice on a conditional statement
+join_df &lt;- join_df %&gt;% 
+            slice(
+              which(
+                date1.x &gt;= date1.y &amp; date1.x &lt;= date2.y | 
+                  is.na(case)
+                )
+              )</code></pre>
+<p>Because <code>slice</code> takes an integer of row numbers to filter, <code>which()</code> is an ideal helper function to contain the conditional statement. This method requires less code and is easy to understand without many comments.</p>
 </div>
 </div>
 
