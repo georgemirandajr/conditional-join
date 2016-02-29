@@ -39,7 +39,7 @@
 <h2>
 <a id="current-solutions" class="anchor" href="#current-solutions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Current Solutions</h2>
 
-<p>The <code>dplyr</code> package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. We will use <code>base</code> functions in this tutorial to accomplish conditional joining.</p>
+<p>The <code>dplyr</code> package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. One must filter a joined dataset using some conditional statement in <code>dplyr</code>, which is still efficient and human-readable. However, since <code>dplyr</code> does not offer anything particularly unique, we will start by using native <code>base</code> R functions in this tutorial to accomplish conditional joining. At the end of the tutorial, a method using <code>dplyr</code> is shown.</p>
 
 <h2>
 <a id="the-sample-data" class="anchor" href="#the-sample-data" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Sample Data</h2>
@@ -94,6 +94,25 @@
 <span class="pl-smi">joined</span></pre></div>
 
 <p>The resulting dataframe is the same number of rows as the original data and non-matches are indicated by <code>NA</code> values. The case number now appears in the row that pertains to an individual record that satisfied the date range condition.</p>
+
+<h2>
+<a id="the-dplyr-way" class="anchor" href="#the-dplyr-way" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Dplyr Way</h2>
+
+<p>In case you are interested in using dplyr to do this task, below is a brief outline of how to accomplish the same thing using dplyr.</p>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-c"># Left Join</span>
+<span class="pl-smi">join_df</span> <span class="pl-k">&lt;-</span> left_join(<span class="pl-smi">df1</span>, <span class="pl-smi">df2</span>, <span class="pl-v">by</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>x<span class="pl-pds">"</span></span>)
+
+<span class="pl-c"># Slice on a conditional statement</span>
+<span class="pl-smi">join_df</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">join_df</span> %<span class="pl-k">&gt;</span>% 
+            slice(
+              which(
+                <span class="pl-smi">date1.x</span> <span class="pl-k">&gt;</span><span class="pl-k">=</span> <span class="pl-smi">date1.y</span> <span class="pl-k">&amp;</span> <span class="pl-smi">date1.x</span> <span class="pl-k">&lt;</span><span class="pl-k">=</span> <span class="pl-smi">date2.y</span> <span class="pl-k">|</span> 
+                  is.na(<span class="pl-smi">case</span>)
+                )
+              )</pre></div>
+
+<p>Because <code>slice</code> takes an integer of row numbers to filter, <code>which()</code> is an ideal helper function to contain the conditional statement. This method requires less code and is easy to understand without many comments. </p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/georgemirandajr">georgemirandajr</a></p>
