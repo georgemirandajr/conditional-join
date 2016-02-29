@@ -1,0 +1,63 @@
+# Conditionally Joining Datasets 
+
+## A Common Problem 
+One of the most common tasks in data analysis is to combine two or more datasets in order to know how a record in one dataset is related to the records in another dataset. An example of this is when a customer dataset may contain multiple account numbers per customer and a second dataset contains some additional information (e.g. transactions) about those customers. What we typically want to do is join these two datasets based on some identifier as well as a conditional statement that ensures we capture other information given some constraint. For example, we may have transaction history for someone, but we want to attribute these transactions to the correct account numbers based on the range of dates the accounts were active. 
+
+## Current Solutions
+The `dplyr` package offers functions to join data based on column names, but there is no functionality yet to join based on conditional statements. We will use `base` functions in this tutorial to accomplish conditional joining.
+
+## The Sample Data
+We will start with data that is typical in many situations. In one dataframe, there is an identifier and two columns that contain dates. We will use this as our primary dataset. The second dataframe contains similar variables, but it also contains a case number. I want to pull in the case number for each record in my primary dataset based on an exact match of the x-number and some conditional statement regarding the date range.
+
+```{r}
+df1 <- data.frame(
+  x = c("x1", "x2", "x2", "x3", "x3", "x4"), 
+  date1 = as.POSIXct(c("2011-12-01", "2013-01-01", "2011-09-01", "2012-04-01", "2015-06-01", "2012-08-01"), 
+                     format = "%Y-%m-%d", 
+                     tz = "UTC"), 
+  date2 = as.POSIXct(c("2012-06-01", "2013-09-01", "2012-08-01", "2013-05-01", "2016-01-01", "2014-04-01"), 
+                     format = "%Y-%m-%d", 
+                     tz = "UTC"))
+
+df2 <- data.frame(
+  x = c("x1", "x1", "x1", "x2", "x2", "x3", "x3"), 
+  date1 = as.POSIXct(c("2011-09-01", "2012-12-01", "2015-04-01", "2013-01-01", "2011-07-01", "2012-04-01", "2015-06-01"), 
+                     format = "%Y-%m-%d", 
+                     tz = "UTC"), 
+  date2 = as.POSIXct(c("2012-06-01", "2013-10-01", "2016-02-01", "2013-09-01", "2012-09-01", "2013-05-01", "2016-01-01"), 
+                     format = "%Y-%m-%d", 
+                     tz = "UTC"),
+  case = c("CN123", "CN456", "CN789", "CN246", "CN802", "CN135", "CN791"))
+  
+df1
+
+df2
+```
+Both datasets contain the unique identifier variable `x`, but the second dataset does not have information on one of the identifiers in `df1`.  
+
+### We can start with a simple merge based on x-number
+
+```{r}
+joined <- merge(df1, df2, by = "x", suffixes = c(".df1", ".df2"), all.x = TRUE)
+```
+Let's see what's going on here. My primary data is the first argument while the reference dataset is the second argument, df2. The column names are the same, so I use the "by" argument and specify the variable containing x-numbers. I opt to add suffixes that make the resulting dataset easier to read. Finally, I tell R to return all the rows in the primary data even if there is no match. This is done with the argument "all.x".
+  
+This gets us multiple records per individual. We want to know, for each individual in our primary data, which matching record has the correct "case" value.
+
+We can determine the correct case number by testing whether the date1 of df1 is between date1 and date2 of df2.
+
+```{r}
+
+joined$match <- joined$date1.df1 >= joined$date1.df2 & joined$date1.df1 <= joined$date2.df2
+
+```
+
+Then we can subset for the records where the logical test was TRUE or NA. We keep NA's if we're interested in preserving the original dataset, which in this case we are.
+
+```{r}
+joined <- subset(joined, match == TRUE | is.na(match))
+
+joined
+```
+
+The resulting dataframe is the same number of rows as the original data and non-matches are indicated by `NA` values. The case number now appears in the row that pertains to an individual record that satisfied the date range condition.
