@@ -1,3 +1,10 @@
+---
+title: "Conditional-join"
+author: "George Miranda"
+date: "February 29, 2016"
+output: html_document
+---
+
 # Conditionally Joining Datasets 
 
 ## A Common Problem 
@@ -28,6 +35,10 @@ df2 <- data.frame(
                      format = "%Y-%m-%d", 
                      tz = "UTC"),
   case = c("CN123", "CN456", "CN789", "CN246", "CN802", "CN135", "CN791"))
+
+df1
+
+df2
   
 ```
 Both datasets contain the unique identifier variable `x`, but the second dataset does not have information on one of the identifiers in `df1`.  
@@ -39,6 +50,8 @@ joined <- merge(df1, df2,
           by = "x", 
           suffixes = c(".df1", ".df2"), 
           all.x = TRUE)
+
+joined
 ```
 Let's see what's going on here. My primary data is the first argument while the reference dataset is the second argument, df2. The column names are the same, so I use the "by" argument and specify the variable containing x-numbers. I opt to add suffixes that make the resulting dataset easier to read. Finally, I tell R to return all the rows in the primary data even if there is no match. This is done with the argument "all.x".
   
